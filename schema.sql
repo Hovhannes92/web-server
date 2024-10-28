@@ -1,0 +1,23 @@
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00
+);
+
+-- Items table
+CREATE TABLE IF NOT EXISTS items (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) UNIQUE NOT NULL,
+  tradable_price DECIMAL(10, 2),
+  non_tradable_price DECIMAL(10, 2)
+);
+
+-- Purchases table
+CREATE TABLE IF NOT EXISTS purchases (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  item_id INTEGER REFERENCES items(id) ON DELETE CASCADE,
+  purchase_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

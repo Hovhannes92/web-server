@@ -4,6 +4,8 @@ import postgres from 'postgres';
 import { createClient } from 'redis';
 import { request } from 'undici';
 import dotenv from 'dotenv';
+import { gunzip } from 'zlib';
+import { promisify } from 'util';
 
 dotenv.config();
 
@@ -105,6 +107,9 @@ app.put('/change-password', async (req, res) => {
 app.get('/items', async (req, res) => {
   const cacheKey = 'items:min_prices';
 
+  // Promisified gunzip function for decompression
+const gunzipAsync = promisify(gunzip);
+
   try {
     const cachedItems = await redisClient.get(cacheKey);
     if (cachedItems) {
@@ -124,7 +129,12 @@ app.get('/items', async (req, res) => {
       return res.status(response.statusCode).json({ error: 'Failed to fetch items from API' });
     }
 
-    const items = (await response.body.json()) as Item[];
+    // Get the response body as a Buffer and decompress if gzipped
+    const compressedBody = await response.body.arrayBuffer();
+    const decompressedBody = await gunzipAsync(Buffer.from(compressedBody));
+
+    // Parse the decompressed response as JSON
+    const items = JSON.parse(decompressedBody.toString()) as Item[];
 
     const processedItems = items.map((item) => ({
       name: item.market_hash_name,
